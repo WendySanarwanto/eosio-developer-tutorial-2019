@@ -4,11 +4,12 @@
 using namespace eosio;
 using namespace std;
 
-class [[eosio:contract]] addressbook: public contract {
+class [[eosio::contract("addressbook")]] addressbook: public contract {
     public:   
         // using contract::contract;
-        employees(name receiver, name code, datastream<const char*> ds): contract(receiver, code, ds) {}
+        addressbook(name receiver, name code, datastream<const char*> ds): contract(receiver, code, ds) {}
 
+        [[eosio::action]]
         void upsert(
             name user,
             string first_name,
@@ -19,9 +20,9 @@ class [[eosio:contract]] addressbook: public contract {
         ) {
             // only the user has control over their own record
             require_auth(user);
-            // Instantiate address book table:
+            // Instantiate address book table's index:
             // - 1st param: get_self() function which will pass the name of this contract.
-            // - 2nd param: get_first_receiver is the account name this contract is deployed to
+            // - 2nd param: get_first_receiver is the account name this contract is deployed to.
             address_index addresses(get_self(), get_first_receiver().value);
             // Table's rows iterator
             auto iterator = addresses.find(user.value);
@@ -53,17 +54,24 @@ class [[eosio:contract]] addressbook: public contract {
             }
         }
 
+        [[eosio::action]]
         void erase(name user) {
             // only the user has control over their own record
             require_auth(user);
+            // Instantiate address book table's index:
+            // - 1st param: get_self() function which will pass the name of this contract.
+            // - 2nd param: get_first_receiver is the account name this contract is deployed to.
             address_index addresses(get_self(), get_first_receiver().value);
+            // Try to find matched user record 1st
             auto iterator = addresses.find(user.value);
+            // Check if the target record exist
             check(iterator != addresses.end(), "Record does not exist.");
+            // Erase the record
             addresses.erase(iterator);
         }
 
     private:
-        struct person {
+        struct [[eosio::table]] person {
             name key;
             string first_name;
             string last_name;
