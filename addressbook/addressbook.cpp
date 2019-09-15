@@ -14,6 +14,7 @@ class [[eosio::contract("addressbook")]] addressbook: public contract {
             name user,
             string first_name,
             string last_name,
+            uint64_t age,
             string street,
             string city,
             string state
@@ -36,6 +37,7 @@ class [[eosio::contract("addressbook")]] addressbook: public contract {
                     row.key = user;
                     row.first_name = first_name;
                     row.last_name = last_name;
+                    row.age = age;
                     row.street = street;
                     row.city = city;
                     row.state = state;
@@ -47,6 +49,7 @@ class [[eosio::contract("addressbook")]] addressbook: public contract {
                     row.key = user;
                     row.first_name = first_name;
                     row.last_name = last_name;
+                    row.age = age;
                     row.street = street;
                     row.city = city;
                     row.state = state;                    
@@ -75,12 +78,16 @@ class [[eosio::contract("addressbook")]] addressbook: public contract {
             name key;
             string first_name;
             string last_name;
+            uint64_t age;
             string street;
             string city;
             string state;
 
             uint64_t primary_key() const { return key.value; }
+            uint64_t get_secondary_l() const { return age; }
         };
 
-        typedef eosio::multi_index<"people"_n, person> address_index;
+        typedef eosio::multi_index<"people"_n, person,
+            indexed_by<"byage"_n, const_mem_fun<person, uint64_t, &person::get_secondary_l>>
+        > address_index;
 };
