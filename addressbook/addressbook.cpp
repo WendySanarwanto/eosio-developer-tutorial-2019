@@ -42,6 +42,7 @@ class [[eosio::contract("addressbook")]] addressbook: public contract {
                     row.city = city;
                     row.state = state;
                 });
+                send_summary(user, " successfully emplaced record to addressbook.");
             } else {
                 // The user exist in the table
                 // update existing record by using the multi_index's "modify" method.
@@ -54,6 +55,7 @@ class [[eosio::contract("addressbook")]] addressbook: public contract {
                     row.city = city;
                     row.state = state;                    
                 });
+                send_summary(user, " successfully modified record to addressbook.");
             }
         }
 
@@ -71,6 +73,17 @@ class [[eosio::contract("addressbook")]] addressbook: public contract {
             check(iterator != addresses.end(), "Record does not exist.");
             // Erase the record
             addresses.erase(iterator);
+            send_summary(user, " successfully erased record from addressbook.");
+        }
+
+        /**
+         * Dispatches a "transaction receipt" whenever a transaction occurs
+         */
+        [[eosio::action]]
+        void notify(name user, string msg) {
+            require_auth(get_self());
+            require_recipient(user);
+
         }
 
     private:
@@ -90,4 +103,23 @@ class [[eosio::contract("addressbook")]] addressbook: public contract {
         typedef eosio::multi_index<"people"_n, person,
             indexed_by<"byage"_n, const_mem_fun<person, uint64_t, &person::get_secondary_l>>
         > address_index;
+    
+        /**
+         * A helper method for sending a receipt to the user, every time they take an action on the contract.
+         */ 
+        void send_summary(name user, string message) {
+            // Instantiate an Action
+            action(
+                // permission level - A permission_level struct
+                permission_level{ get_self(), "active"_n },
+                // code - The contract to call (initialised using eosio::name type)
+                // "addressbook"_n would also work here, but if this contract were deployed under a different account name, it wouldn't work.
+                get_self(),
+                // action - The action (initialised using eosio::name type)
+                // The notify action was previously defined to be called from this inline action.
+                "notify"_n, 
+                // data - The data to pass to the action, a tuple of positionals that correlate to the actions being called.
+                std::make_tuple(user, name{user}.to_string() + message)
+            ).send();
+        }
 };

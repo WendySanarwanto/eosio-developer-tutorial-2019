@@ -11,3 +11,10 @@ spec-version: 0.0.2
 title: Erase
 summary: This action will remove an entry from the address book if an entry in the multi index table exists with the specified name.
 icon:
+
+<h1 class="contract">notify</h1>
+--
+spec-version: 0.0.2
+title: Notify
+summary: This action is intended to be called from within the contract, for sending 'notification' to caller, each time after other actions are executed.
+icon:
