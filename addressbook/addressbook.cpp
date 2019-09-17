@@ -1,5 +1,6 @@
 // #include <ctime>
 #include <eosio/eosio.hpp>
+#include "abcounter.cpp"
 
 using namespace eosio;
 using namespace std;
@@ -43,6 +44,7 @@ class [[eosio::contract("addressbook")]] addressbook: public contract {
                     row.state = state;
                 });
                 send_summary(user, " successfully emplaced record to addressbook.");
+                increment_counter(user, "emplace");
             } else {
                 // The user exist in the table
                 // update existing record by using the multi_index's "modify" method.
@@ -56,6 +58,7 @@ class [[eosio::contract("addressbook")]] addressbook: public contract {
                     row.state = state;                    
                 });
                 send_summary(user, " successfully modified record to addressbook.");
+                increment_counter(user, "modified");
             }
         }
 
@@ -74,6 +77,7 @@ class [[eosio::contract("addressbook")]] addressbook: public contract {
             // Erase the record
             addresses.erase(iterator);
             send_summary(user, " successfully erased record from addressbook.");
+            increment_counter(user, "erased");
         }
 
         /**
@@ -121,5 +125,16 @@ class [[eosio::contract("addressbook")]] addressbook: public contract {
                 // data - The data to pass to the action, a tuple of positionals that correlate to the actions being called.
                 std::make_tuple(user, name{user}.to_string() + message)
             ).send();
+        }
+
+        /**
+         * A helper method to call count action of abcounter
+         */ 
+        void increment_counter(name user, string type) {
+            abcounter::count_action count(
+                "abcounter"_n,              // Callee contract name
+                { get_self(), "active"_n }  // Permission struct 
+            );
+            count.send(user, type);         // Call abcontract's count action
         }
 };
